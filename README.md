@@ -9,4 +9,6 @@
 * `git clone https://github.com/tsukanov-as/taxis2d.git`
 * Запустить ZeroBrane Studio и выбрать папку проекта <...>\taxis2d\src
 ![Папка проекта](img/project.png)
+* Выбрать интерпретатор LÖVE  
+![Интерпретатор](img/interpreter.png)
 * Открыть файл `main.lua` и нажать `F6`
