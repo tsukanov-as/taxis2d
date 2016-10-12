@@ -123,13 +123,18 @@ function love.draw()
             killScene(); loadScene() -- перезапуск сцены
         end
     end
-
+    
+    if imgui.Button("new circle") then
+        local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+        objects[#objects+1] = newCircleObject(w/2, h/2, 25, "dynamic") 
+    end
+    
     for _, obj in ipairs(objects) do
         obj.draw()
     end
 
     -- отрисовка GUI
-    love.graphics.setColor(255,255,255)
+    love.graphics.setColor(255, 255, 255)
     imgui.Render()
 end
 
@@ -188,7 +193,7 @@ function love.mousereleased(x, y, button)
         -- отмена захвата объекта мышкой
         if (button == 1) and mouseJoint then
             mouseJoint:destroy()
-            mouseJoint=nil
+            mouseJoint = nil
         end
     end
 end
