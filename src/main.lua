@@ -7,7 +7,7 @@ local meter = 50
 local world
 local objects
 
-local mouseJoint
+local mouseJoint, cursorGrabbing
 
 --------------------------------------------------------------------------------
 -- Конструкторы объектов
@@ -73,6 +73,8 @@ local function loadScene()
     world = love.physics.newWorld(0, 9.81 * meter, true)
     objects = {}
 
+    cursorGrabbing = love.mouse.newCursor("img/grabbing.png", 0, 0)
+
     local w = love.graphics.getWidth()
     local h = love.graphics.getHeight()
 
@@ -107,6 +109,7 @@ function love.update(dt)
         for _, obj in ipairs(objects) do
             if obj.test(x, y) then
                 mouseJoint = love.physics.newMouseJoint(obj.body, x, y)
+                love.mouse.setCursor(cursorGrabbing)
                 break
             end
         end
@@ -197,6 +200,7 @@ function love.mousereleased(x, y, button)
         if (button == 1) and mouseJoint then
             mouseJoint:destroy()
             mouseJoint = nil
+            love.mouse.setCursor()
         end
     end
 end
