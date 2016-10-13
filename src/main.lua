@@ -132,9 +132,7 @@ function love.update(dt)
     world:update(dt)
     
     if imgui.Button("reset") then
-        for _, obj in ipairs(objects) do
-            killScene(); loadScene() -- перезапуск сцены
-        end
+        killScene(); loadScene() -- перезапуск сцены
     end
     
     local w, h = love.graphics.getWidth(), love.graphics.getHeight()
@@ -144,7 +142,7 @@ function love.update(dt)
     end
     
     if imgui.Button("new rectangle") then
-       objects[#objects+1] = newRectangleObject(w/2, h/2 + 100, 40, 70, "dynamic", 5) 
+        objects[#objects+1] = newRectangleObject(w/2, h/2 + 100, 40, 70, "dynamic", 5) 
     end
     
 end
