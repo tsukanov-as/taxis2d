@@ -101,7 +101,18 @@ function love.update(dt)
     
     imgui.NewFrame()
     world:update(dt)
-
+    
+    if imgui.Button("reset") then
+        for _, obj in ipairs(objects) do
+            killScene(); loadScene() -- перезапуск сцены
+        end
+    end
+    
+    if imgui.Button("new circle") then
+        local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+        objects[#objects+1] = newCircleObject(w/2, h/2, 25, "dynamic") 
+    end
+    
     local x, y = love.mouse.getX(), love.mouse.getY()   
     
     -- захват объекта мышкой
@@ -123,17 +134,6 @@ function love.update(dt)
 end
 
 function love.draw()
-
-    if imgui.Button("reset") then
-        for _, obj in ipairs(objects) do
-            killScene(); loadScene() -- перезапуск сцены
-        end
-    end
-    
-    if imgui.Button("new circle") then
-        local w, h = love.graphics.getWidth(), love.graphics.getHeight()
-        objects[#objects+1] = newCircleObject(w/2, h/2, 25, "dynamic") 
-    end
     
     for _, obj in ipairs(objects) do
         obj.draw()
