@@ -9,6 +9,8 @@ local objects
 
 local mouseJoint, cursorGrabbing
 
+local pause = false
+
 --------------------------------------------------------------------------------
 -- Конструкторы объектов
 
@@ -129,10 +131,16 @@ end
 function love.update(dt)
     
     imgui.NewFrame()
-    world:update(dt)
+    if not pause then
+        world:update(dt)
+    end
     
     if imgui.Button("reset") then
         killScene(); loadScene() -- перезапуск сцены
+    end
+    
+    if imgui.Button("pause") then
+       pause = not pause 
     end
     
     local w, h = love.graphics.getWidth(), love.graphics.getHeight()
