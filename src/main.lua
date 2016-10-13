@@ -115,17 +115,6 @@ function love.update(dt)
     
     local x, y = love.mouse.getX(), love.mouse.getY()   
     
-    -- захват объекта мышкой
-    if love.mouse.isDown(1) and not mouseJoint then
-        for _, obj in ipairs(objects) do
-            if obj.test(x, y) then
-                mouseJoint = love.physics.newMouseJoint(obj.body, x, y)
-                love.mouse.setCursor(cursorGrabbing)
-                break
-            end
-        end
-    end
-    
     -- перемещение захваченного объекта
     if mouseJoint then
         mouseJoint:setTarget(x, y)
@@ -189,7 +178,16 @@ end
 function love.mousepressed(x, y, button)
     imgui.MousePressed(button)
     if not imgui.GetWantCaptureMouse() then
-        --
+        -- захват объекта мышкой
+        if love.mouse.isDown(1) and not mouseJoint then
+            for _, obj in ipairs(objects) do
+                if obj.test(x, y) then
+                    mouseJoint = love.physics.newMouseJoint(obj.body, x, y)
+                    love.mouse.setCursor(cursorGrabbing)
+                    break
+                end
+            end
+        end
     end
 end
 
