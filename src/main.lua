@@ -34,6 +34,9 @@ local function newCircleObject(x, y, r, kind, density, restitution)
             love.graphics.circle("fill", x, y, r)
             love.graphics.setColor(edgeColor)
             love.graphics.circle("line", x, y, r)
+            -- линия для визулизации вращения
+            local angle = b:getAngle()
+            love.graphics.line(x, y, x + math.cos(angle)*r, y + math.sin(angle)*r)
         end,
         test = function(x, y)
             return f:testPoint(x, y)
