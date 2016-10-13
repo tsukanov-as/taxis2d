@@ -112,13 +112,6 @@ function love.update(dt)
         local w, h = love.graphics.getWidth(), love.graphics.getHeight()
         objects[#objects+1] = newCircleObject(w/2, h/2, 25, "dynamic") 
     end
-    
-    local x, y = love.mouse.getX(), love.mouse.getY()   
-    
-    -- перемещение захваченного объекта
-    if mouseJoint then
-        mouseJoint:setTarget(x, y)
-    end
 
 end
 
@@ -171,7 +164,10 @@ end
 function love.mousemoved(x, y)
     imgui.MouseMoved(x, y)
     if not imgui.GetWantCaptureMouse() then
-        --
+        -- перемещение захваченного объекта
+        if mouseJoint then
+            mouseJoint:setTarget(x, y)
+        end
     end
 end
 
