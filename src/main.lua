@@ -45,6 +45,34 @@ local function newCircleObject(x, y, r, kind, density, restitution)
 end
 
 --[[ 
+    x, y - начальные координаты центра
+    h, w - высота и ширина
+    kind ("static") - вид объекта
+    restitution - упругость
+    density - плотность
+]]--
+function newRectangleObject(x, y, h, w, kind, density, restitution)
+    density = density or 1
+    restitution = restitution or 0.9
+    local b = love.physics.newBody(world, x, y, kind)
+    local s = love.physics.newRectangleShape(h, w)
+    local f = love.physics.newFixture(b, s, density)
+    f:setRestitution(restitution)
+    return {
+        body = b,
+        draw = function()
+            love.graphics.setColor(bodyColor)
+            love.graphics.polygon("fill", b:getWorldPoints(s:getPoints()))
+            love.graphics.setColor(edgeColor)
+            love.graphics.polygon("line", b:getWorldPoints(s:getPoints()))
+        end,
+        test = function(x, y)
+            return f:testPoint(x, y)
+        end
+    }
+end
+
+--[[ 
     x1, y1, x2, y2 - координаты грани
     kind ("static") - вид объекта
     restitution - упругость
@@ -79,6 +107,7 @@ local function loadScene()
     local h = love.graphics.getHeight()
 
     objects[#objects+1] = newCircleObject(w/2, h/2, 25, "dynamic")
+    objects[#objects+1] = newRectangleObject(w/2, h/2 + 100, 40, 70, "dynamic", 5)
     
     -- cцена в размер окна
     newEdgeObject(0, 0, w, 0) -- верхняя граница
@@ -108,11 +137,16 @@ function love.update(dt)
         end
     end
     
-    if imgui.Button("new circle") then
-        local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+    local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+    
+    if imgui.Button("new circle") then   
         objects[#objects+1] = newCircleObject(w/2, h/2, 25, "dynamic") 
     end
-
+    
+    if imgui.Button("new rectangle") then
+       objects[#objects+1] = newRectangleObject(w/2, h/2 + 100, 40, 70, "dynamic", 5) 
+    end
+    
 end
 
 function love.draw()
