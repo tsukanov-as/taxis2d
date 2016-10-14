@@ -116,7 +116,7 @@ local function newSensor(body, dx1, dy1, dx2, dy2)
             local cb = function(fixture, x, y, xn, yn, fraction)
                 love.graphics.setColor(255, 0, 0, 255 * (1.2-fraction))
                 love.graphics.circle("line", x, y, 3)
-                f = fraction
+                f = 1-fraction
                 return 0
             end
             local x1, y1, x2, y2 = body:getWorldPoints(dx1, dy1, dx2, dy2)
