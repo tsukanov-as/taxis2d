@@ -2,10 +2,12 @@ require "imgui"
 
 local bodyColor = {100, 150, 100, 100}
 local edgeColor = {100, 150, 100}
+local sensorColor = {150, 150, 150, 100}
 
 local meter = 50
 local world
 local objects
+local sensors
 
 local mouseJoint, cursorGrabbing
 
@@ -98,6 +100,28 @@ local function newEdgeObject(x1, y1, x2, y2, restitution)
     }
 end
 
+--[[
+    body - тело, на которое крепится сенсор
+    dx1, dy1, dx2, dy2 - координаты луча сенсора относительно тела
+--]]
+local function newSensor(body, dx1, dy1, dx2, dy2)
+    return {
+        draw = function()
+            love.graphics.setColor(sensorColor)
+            love.graphics.line(body:getWorldPoints(dx1, dy1, dx2, dy2))
+        end,
+        check = function()
+            local cb = function(fixture, x, y, xn, yn, fraction)
+                love.graphics.setColor(255, 0, 0, 255 * (1.2-fraction))
+                love.graphics.circle("line", x, y, 3)
+                return 0
+            end
+            x1, y1, x2, y2 = body:getWorldPoints(dx1, dy1, dx2, dy2)
+            world:rayCast(x1, y1, x2, y2, cb)
+        end,
+    }
+end
+
 --------------------------------------------------------------------------------
 -- Управление сценой
 
@@ -113,6 +137,19 @@ local function loadScene()
         newCircleObject(w/2, h/2, 25, "dynamic"),
         newRectangleObject(w/2, h/2 + 100, 40, 70, "dynamic", 5),
     }
+    
+    sensors = {}
+    do  -- генерация сенсоров
+        local circleBody = objects[1].body
+        local count = 14
+        local r1, r2 = 25, 150
+        local angle = 0
+        for i = 1, count do
+            angle = angle + math.pi/count*2
+            local x, y = math.cos(angle), math.sin(angle)
+            sensors[#sensors+1] = newSensor(circleBody, x*r1, y*r1, x*r2, y*r2)
+        end
+    end
     
     -- cцена в размер окна
     newEdgeObject(0, 0, w, 0) -- верхняя граница
@@ -167,7 +204,12 @@ function love.draw()
     for _, obj in ipairs(objects) do
         obj.draw()
     end
-
+    
+    for _, s in ipairs(sensors) do
+        s.draw()
+        s.check()
+    end
+    
     -- отрисовка GUI
     love.graphics.setColor(255, 255, 255)
     imgui.Render()
