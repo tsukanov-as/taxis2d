@@ -1,5 +1,7 @@
 # taxis2d
 
+![taxis2d](img/taxis2d.png)
+
 ## Быстрый старт (Windows)
 * Скачать и установить [LÖVE 0.10.1](https://bitbucket.org/rude/love/downloads/)
 * Добавить путь к папке LÖVE в переменную среды `PATH`
