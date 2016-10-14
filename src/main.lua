@@ -98,15 +98,16 @@ end
 
 local function loadScene()
     world = love.physics.newWorld(0, 9.81 * meter, true)
-    objects = {}
 
     cursorGrabbing = love.mouse.newCursor("img/grabbing.png", 0, 0)
 
-    local w = love.graphics.getWidth()
-    local h = love.graphics.getHeight()
-
-    objects[#objects+1] = newCircleObject(w/2, h/2, 25, "dynamic")
-    objects[#objects+1] = newRectangleObject(w/2, h/2 + 100, 40, 70, "dynamic", 5)
+    local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+    
+    -- объекты сцены
+    objects = {
+        newCircleObject(w/2, h/2, 25, "dynamic"),
+        newRectangleObject(w/2, h/2 + 100, 40, 70, "dynamic", 5),
+    }
     
     -- cцена в размер окна
     newEdgeObject(0, 0, w, 0) -- верхняя граница
