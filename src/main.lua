@@ -11,6 +11,8 @@ local mouseJoint, cursorGrabbing
 
 local pause = false
 
+local mouseGrab
+
 --------------------------------------------------------------------------------
 -- Конструкторы объектов
 
@@ -206,10 +208,14 @@ end
 function love.mousemoved(x, y)
     imgui.MouseMoved(x, y)
     if not imgui.GetWantCaptureMouse() then
+        
         -- перемещение захваченного объекта
-        if mouseJoint then
+        if mouseGrab then
+            mouseGrab.body:setPosition(x + mouseGrab.dx, y + mouseGrab.dy)
+        elseif mouseJoint then
             mouseJoint:setTarget(x, y)
         end
+        
     end
 end
 
@@ -218,11 +224,17 @@ function love.mousepressed(x, y, button)
     if not imgui.GetWantCaptureMouse() then
         
         -- захват объекта мышкой
-        if (button == 1) and not mouseJoint then
+        if button == 1 then
             for _, obj in ipairs(objects) do
                 if obj.test(x, y) then
-                    mouseJoint = love.physics.newMouseJoint(obj.body, x, y)
-                    love.mouse.setCursor(cursorGrabbing)
+                    if pause then
+                        local bx, by = obj.body:getPosition()
+                        mouseGrab = {body = obj.body, dx = bx - x, dy = by - y}
+                        love.mouse.setCursor(cursorGrabbing)
+                    else
+                        mouseJoint = love.physics.newMouseJoint(obj.body, x, y)
+                        love.mouse.setCursor(cursorGrabbing)
+                    end
                     break
                 end
             end
@@ -236,10 +248,15 @@ function love.mousereleased(x, y, button)
     if not imgui.GetWantCaptureMouse() then
         
         -- отмена захвата объекта мышкой
-        if (button == 1) and mouseJoint then
-            mouseJoint:destroy()
-            mouseJoint = nil
-            love.mouse.setCursor()
+        if button == 1 then
+            if mouseGrab then
+                mouseGrab = nil
+                love.mouse.setCursor()
+            elseif mouseJoint then
+                mouseJoint:destroy()
+                mouseJoint = nil
+                love.mouse.setCursor()
+            end
         end
         
     end
