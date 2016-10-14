@@ -15,6 +15,8 @@ local pause = false
 
 local mouseGrab
 
+local speed = 1.0 -- скорость симуляции физики
+
 --------------------------------------------------------------------------------
 -- Конструкторы объектов
 
@@ -179,7 +181,7 @@ function love.update(dt)
     
     imgui.NewFrame()
     if not pause then
-        world:update(dt)
+        world:update(dt * speed)
     end
     
     if imgui.Button("reset") then
@@ -203,6 +205,11 @@ function love.update(dt)
     local sdata = {}
     for _, s in ipairs(sensors) do
         sdata[#sdata+1] = s.get()
+    end
+    
+    local status, floatValue = imgui.SliderFloat("speed", speed, 0.0, 1.0)
+    if status then
+        speed = floatValue
     end
     
     imgui.PlotHistogram("sensors", sdata, #sdata, 0, nil, 0, 1, 0, 80)
