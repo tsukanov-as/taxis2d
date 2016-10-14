@@ -98,6 +98,9 @@ local function newEdgeObject(x1, y1, x2, y2, restitution)
     }
 end
 
+--------------------------------------------------------------------------------
+-- Управление сценой
+
 local function loadScene()
     world = love.physics.newWorld(0, 9.81 * meter, true)
 
