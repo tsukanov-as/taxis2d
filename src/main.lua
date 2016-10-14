@@ -116,7 +116,7 @@ local function newSensor(body, dx1, dy1, dx2, dy2)
                 love.graphics.circle("line", x, y, 3)
                 return 0
             end
-            x1, y1, x2, y2 = body:getWorldPoints(dx1, dy1, dx2, dy2)
+            local x1, y1, x2, y2 = body:getWorldPoints(dx1, dy1, dx2, dy2)
             world:rayCast(x1, y1, x2, y2, cb)
         end,
     }
@@ -144,7 +144,7 @@ local function loadScene()
         local count = 14
         local r1, r2 = 25, 150
         local angle = 0
-        for i = 1, count do
+        for _ = 1, count do
             angle = angle + math.pi/count*2
             local x, y = math.cos(angle), math.sin(angle)
             sensors[#sensors+1] = newSensor(circleBody, x*r1, y*r1, x*r2, y*r2)
