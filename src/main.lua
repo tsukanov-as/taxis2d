@@ -76,16 +76,13 @@ end
 
 --[[ 
     x1, y1, x2, y2 - координаты грани
-    kind ("static") - вид объекта
-    density - плотность
     restitution - упругость
 --]]
-local function newEdgeObject(x1, y1, x2, y2, kind, density, restitution)
-    density = density or 1
+local function newEdgeObject(x1, y1, x2, y2, restitution)
     restitution = restitution or 0.9
-    local b = love.physics.newBody(world, 0, 0, kind)
+    local b = love.physics.newBody(world)
     local s = love.physics.newEdgeShape(x1, y1, x2, y2)
-    local f = love.physics.newFixture(b, s, density)
+    local f = love.physics.newFixture(b, s)
     f:setRestitution(restitution)
     return {
         body = b,
