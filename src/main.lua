@@ -105,20 +105,24 @@ end
     dx1, dy1, dx2, dy2 - координаты луча сенсора относительно тела
 --]]
 local function newSensor(body, dx1, dy1, dx2, dy2)
+    local f = 0
     return {
         draw = function()
             love.graphics.setColor(sensorColor)
             love.graphics.line(body:getWorldPoints(dx1, dy1, dx2, dy2))
+            f = 0
         end,
         check = function()
             local cb = function(fixture, x, y, xn, yn, fraction)
                 love.graphics.setColor(255, 0, 0, 255 * (1.2-fraction))
                 love.graphics.circle("line", x, y, 3)
+                f = fraction
                 return 0
             end
             local x1, y1, x2, y2 = body:getWorldPoints(dx1, dy1, dx2, dy2)
             world:rayCast(x1, y1, x2, y2, cb)
         end,
+        get = function() return f end
     }
 end
 
@@ -141,7 +145,7 @@ local function loadScene()
     sensors = {}
     do  -- генерация сенсоров
         local circleBody = objects[1].body
-        local count = 14
+        local count = 28
         local r1, r2 = 25, 150
         local angle = 0
         for _ = 1, count do
@@ -195,6 +199,13 @@ function love.update(dt)
     if imgui.Button("new rectangle") then
         objects[#objects+1] = newRectangleObject(w/2, h/2 + 100, 40, 70, "dynamic", 5) 
     end
+    
+    local sdata = {}
+    for _, s in ipairs(sensors) do
+        sdata[#sdata+1] = s.get()
+    end
+    
+    imgui.PlotHistogram("sensors", sdata, #sdata, 0, nil, 0, 1, 0, 80)
     
 end
 
