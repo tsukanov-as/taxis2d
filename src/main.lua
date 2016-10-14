@@ -15,12 +15,12 @@ local pause = false
 -- Конструкторы объектов
 
 --[[ 
-    x, y - начальные координаты объекта
+    x, y - начальные координаты центра круга
     r - радиус
     kind ("static") - вид объекта
-    restitution - упругость
     density - плотность
-]]--
+    restitution - упругость
+--]]
 local function newCircleObject(x, y, r, kind, density, restitution)
     density = density or 1
     restitution = restitution or 0.9
@@ -47,12 +47,12 @@ local function newCircleObject(x, y, r, kind, density, restitution)
 end
 
 --[[ 
-    x, y - начальные координаты центра
+    x, y - начальные координаты центра прямоугольника
     h, w - высота и ширина
     kind ("static") - вид объекта
-    restitution - упругость
     density - плотность
-]]--
+    restitution - упругость
+--]]
 function newRectangleObject(x, y, h, w, kind, density, restitution)
     density = density or 1
     restitution = restitution or 0.9
@@ -77,9 +77,9 @@ end
 --[[ 
     x1, y1, x2, y2 - координаты грани
     kind ("static") - вид объекта
-    restitution - упругость
     density - плотность
-]]--
+    restitution - упругость
+--]]
 local function newEdgeObject(x1, y1, x2, y2, kind, density, restitution)
     density = density or 1
     restitution = restitution or 0.9
@@ -123,6 +123,9 @@ local function killScene()
     objects = {}
 end
 
+--------------------------------------------------------------------------------
+-- Обработка событий
+
 function love.load(arg)
     love.graphics.setBackgroundColor(240, 240, 240)
     loadScene()
@@ -140,7 +143,7 @@ function love.update(dt)
     end
     
     if imgui.Button("pause") then
-       pause = not pause 
+        pause = not pause 
     end
     
     local w, h = love.graphics.getWidth(), love.graphics.getHeight()
@@ -157,6 +160,7 @@ end
 
 function love.draw()
     
+    -- отрисовка объектов
     for _, obj in ipairs(objects) do
         obj.draw()
     end
@@ -164,7 +168,7 @@ function love.draw()
     -- отрисовка GUI
     love.graphics.setColor(255, 255, 255)
     imgui.Render()
-end
+end 
 
 function love.resize(w, h)
     --
@@ -214,8 +218,9 @@ end
 function love.mousepressed(x, y, button)
     imgui.MousePressed(button)
     if not imgui.GetWantCaptureMouse() then
+        
         -- захват объекта мышкой
-        if button == 1 and not mouseJoint then
+        if (button == 1) and not mouseJoint then
             for _, obj in ipairs(objects) do
                 if obj.test(x, y) then
                     mouseJoint = love.physics.newMouseJoint(obj.body, x, y)
@@ -224,18 +229,21 @@ function love.mousepressed(x, y, button)
                 end
             end
         end
+        
     end
 end
 
 function love.mousereleased(x, y, button)
     imgui.MouseReleased(button)
     if not imgui.GetWantCaptureMouse() then
+        
         -- отмена захвата объекта мышкой
         if (button == 1) and mouseJoint then
             mouseJoint:destroy()
             mouseJoint = nil
             love.mouse.setCursor()
         end
+        
     end
 end
 
