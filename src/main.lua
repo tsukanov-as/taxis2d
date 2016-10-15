@@ -109,24 +109,30 @@ end
     dx1, dy1, dx2, dy2 - координаты луча сенсора относительно тела
 --]]
 local function newSensor(body, dx1, dy1, dx2, dy2)
-    local f = 0
+    local minf = 1
+    local hitx, hity = 0, 0
     return {
         draw = function()
             love.graphics.setColor(sensorColor)
             love.graphics.line(body:getWorldPoints(dx1, dy1, dx2, dy2))
-            f = 0
+            if minf < 1 then
+                love.graphics.setColor(255, 0, 0, 255 * (1.2-minf))
+                love.graphics.circle("line", hitx, hity, 3)
+            end
+            minf = 1
         end,
         check = function()
             local cb = function(fixture, x, y, xn, yn, fraction)
-                love.graphics.setColor(255, 0, 0, 255 * (1.2-fraction))
-                love.graphics.circle("line", x, y, 3)
-                f = 1-fraction
-                return 0
+                if fraction < minf then
+                    minf = fraction
+                    hitx, hity = x, y
+                end
+                return 1
             end
             local x1, y1, x2, y2 = body:getWorldPoints(dx1, dy1, dx2, dy2)
             world:rayCast(x1, y1, x2, y2, cb)
         end,
-        get = function() return f end
+        get = function() return 1-minf end
     }
 end
 
