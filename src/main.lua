@@ -190,7 +190,7 @@ local function newTaxis(sensors, effectors)
                         val = val + v
                     end
                 end
-                e.pulse(val / k)
+                e.pulse(math.sin(val/k*math.pi))
             end
         end,
     }
