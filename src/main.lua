@@ -3,12 +3,14 @@ require "imgui"
 local bodyColor = {100, 150, 100, 100}
 local edgeColor = {100, 150, 100}
 local sensorColor = {150, 150, 150, 100}
+local effectorColor = {200, 0, 200, 100}
 
 local meter = 50
 local world
-local xg, yg = 0, 9.81 -- гравитация
+local xg, yg = 0, 0 -- гравитация
+local damping = 0.9 -- затухание движений
 local objects
-local sensors
+local sensors, effectors
 
 local mouseJoint, mouseGrab, cursorGrabbing -- состояние захвата объекта мышкой
 local curBody -- тело в фокусе
@@ -29,11 +31,13 @@ local speed = 1.0 -- скорость симуляции физики
 --]]
 local function newCircleObject(x, y, r, kind, density, restitution)
     density = density or 1
-    restitution = restitution or 0.9
+    restitution = restitution or 0
     local b = love.physics.newBody(world, x, y, kind)
     local s = love.physics.newCircleShape(r)
     local f = love.physics.newFixture(b, s, density)
     f:setRestitution(restitution)
+    b:setLinearDamping(damping)
+    b:setAngularDamping(damping)
     return {
         body = b,
         draw = function()
@@ -61,11 +65,13 @@ end
 --]]
 function newRectangleObject(x, y, h, w, kind, density, restitution)
     density = density or 1
-    restitution = restitution or 0.9
+    restitution = restitution or 0
     local b = love.physics.newBody(world, x, y, kind)
     local s = love.physics.newRectangleShape(h, w)
     local f = love.physics.newFixture(b, s, density)
     f:setRestitution(restitution)
+    b:setLinearDamping(damping)
+    b:setAngularDamping(damping)
     return {
         body = b,
         draw = function()
@@ -85,7 +91,7 @@ end
     restitution - упругость
 --]]
 local function newEdgeObject(x1, y1, x2, y2, restitution)
-    restitution = restitution or 0.9
+    restitution = restitution or 0.1
     local b = love.physics.newBody(world)
     local s = love.physics.newEdgeShape(x1, y1, x2, y2)
     local f = love.physics.newFixture(b, s)
@@ -134,6 +140,31 @@ local function newSensor(body, dx1, dy1, dx2, dy2)
     }
 end
 
+local function newEffector(body, dx1, dy1, dx2, dy2)
+    local fx, fy = dx1 - dx2, dy1 - dy2
+    local k = 1
+    return {
+        draw = function()
+            local oldLineWidth = love.graphics.getLineWidth()
+            love.graphics.setLineWidth(4)
+            love.graphics.setColor(effectorColor)
+            love.graphics.line(body:getWorldPoints(dx1, dy1, dx2*k, dy2*k))
+            love.graphics.setLineWidth(oldLineWidth)
+            if k > 1 then
+                k = k - 0.005
+            else
+                k = 1
+            end
+        end,
+        pulse = function(df)
+            if df > 1 then df = 1 end
+            if df < 0 then df = 0 end
+            k = 1 + df*2
+            body:applyForce(body:getWorldVector(fx*df*10000, fy*df*10000))
+        end,
+    }
+end
+
 --------------------------------------------------------------------------------
 -- Управление сценой
 
@@ -146,7 +177,7 @@ local function loadScene()
     
     -- объекты сцены
     objects = {
-        newCircleObject(w/2, h/2, 25, "dynamic"),
+        newCircleObject(w/2, h/2, 25, "dynamic", 0.1),
         newRectangleObject(w/2, h/2 + 100, 40, 70, "dynamic", 5),
     }
     
@@ -160,6 +191,19 @@ local function loadScene()
             angle = angle + math.pi/count*2
             local x, y = math.cos(angle), math.sin(angle)
             sensors[#sensors+1] = newSensor(circleBody, x*r1, y*r1, x*r2, y*r2)
+        end
+    end
+    
+    effectors = {}
+    do  -- генерация эффекторов
+        local circleBody = objects[1].body
+        local count = 1
+        local r1, r2 = 25, 30
+        local angle = 0
+        for _ = 1, count do
+            local x, y = math.cos(angle), math.sin(angle)
+            effectors[#effectors+1] = newEffector(circleBody, x*r1, y*r1, x*r2, y*r2)
+            angle = angle + math.pi/count*2
         end
     end
     
@@ -227,6 +271,10 @@ function love.update(dt)
     
     imgui.PlotHistogram("sensors", sdata, #sdata, 0, nil, 0, 1, 0, 80)
     
+    if imgui.Button("pulse") then
+        effectors[1].pulse(0.5) 
+    end 
+    
     if curBody then
         local status, floatValue = imgui.SliderFloat("angle", curBody:getAngle() % (math.pi*2), 0, math.pi*2)
         if status then
@@ -252,6 +300,10 @@ function love.draw()
     for _, s in ipairs(sensors) do
         s.draw()
         s.check()
+    end
+    
+    for _, e in ipairs(effectors) do
+        e.draw()
     end
     
     -- отрисовка GUI
