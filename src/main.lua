@@ -8,9 +8,9 @@ local effectorColor = {200, 0, 200, 100}
 local meter = 50
 local world
 local xg, yg = 0, 0 -- гравитация
-local damping = 0.9 -- затухание движений
+local damping = 3 -- затухание движений
 local objects
-local sensors, effectors
+local sensors, effectors, brains
 
 local mouseJoint, mouseGrab, cursorGrabbing -- состояние захвата объекта мышкой
 local curBody -- тело в фокусе
@@ -115,6 +115,7 @@ end
 local function newSensor(body, dx1, dy1, dx2, dy2)
     local minf = 1
     local hitx, hity = 0, 0
+    local hitbody
     return {
         draw = function()
             love.graphics.setColor(sensorColor)
@@ -130,13 +131,14 @@ local function newSensor(body, dx1, dy1, dx2, dy2)
                 if fraction < minf then
                     minf = fraction
                     hitx, hity = x, y
+                    hitbody = fixture:getBody()
                 end
                 return 1
             end
             local x1, y1, x2, y2 = body:getWorldPoints(dx1, dy1, dx2, dy2)
             world:rayCast(x1, y1, x2, y2, cb)
         end,
-        get = function() return 1-minf end
+        get = function() return 1-minf, hitbody end
     }
 end
 
@@ -151,7 +153,7 @@ local function newEffector(body, dx1, dy1, dx2, dy2)
             love.graphics.line(body:getWorldPoints(dx1, dy1, dx2*k, dy2*k))
             love.graphics.setLineWidth(oldLineWidth)
             if k > 1 then
-                k = k - 0.005
+                k = k - 0.01
             else
                 k = 1
             end
@@ -160,7 +162,36 @@ local function newEffector(body, dx1, dy1, dx2, dy2)
             if df > 1 then df = 1 end
             if df < 0 then df = 0 end
             k = 1 + df*2
-            body:applyForce(body:getWorldVector(fx*df*10000, fy*df*10000))
+            body:applyForce(body:getWorldVector(fx*df*100, fy*df*100))
+        end,
+    }
+end
+
+local function newTaxis(sensors, effectors)
+    assert(#sensors % #effectors == 0)
+    local k = #sensors / #effectors
+    local taxis = {}
+    local j = math.floor(#sensors / 2) - 1
+    for _, e in ipairs(effectors) do
+        local list = {}
+        for i = 1, k do
+            list[#list+1] = sensors[j % #sensors + 1]
+            j = j + 1
+        end
+        taxis[e] = list
+    end
+    return {
+        iter = function()
+            for e, list in pairs(taxis) do
+                local val = 0
+                for _, s in ipairs(list) do
+                    local v, body = s.get()
+                    if body and body:getType() ~= "static" then
+                        val = val + v
+                    end
+                end
+                e.pulse(val / k)
+            end
         end,
     }
 end
@@ -178,7 +209,7 @@ local function loadScene()
     -- объекты сцены
     objects = {
         newCircleObject(w/2, h/2, 25, "dynamic", 0.1),
-        newRectangleObject(w/2, h/2 + 100, 40, 70, "dynamic", 5),
+        newRectangleObject(w/2, h/2 + 100, 40, 70, "dynamic", 1),
     }
     
     sensors = {}
@@ -188,16 +219,16 @@ local function loadScene()
         local r1, r2 = 25, 150
         local angle = 0
         for _ = 1, count do
-            angle = angle + math.pi/count*2
             local x, y = math.cos(angle), math.sin(angle)
             sensors[#sensors+1] = newSensor(circleBody, x*r1, y*r1, x*r2, y*r2)
+            angle = angle + math.pi/count*2
         end
     end
     
     effectors = {}
     do  -- генерация эффекторов
         local circleBody = objects[1].body
-        local count = 1
+        local count = 7
         local r1, r2 = 25, 30
         local angle = 0
         for _ = 1, count do
@@ -206,6 +237,10 @@ local function loadScene()
             angle = angle + math.pi/count*2
         end
     end
+    
+    brains = {
+        newTaxis(sensors, effectors)
+    }
     
     -- cцена в размер окна
     newEdgeObject(0, 0, w, 0) -- верхняя граница
@@ -280,6 +315,10 @@ function love.update(dt)
         if status then
             curBody:setAngle(floatValue)
         end
+    end
+    
+    for _, b in ipairs(brains) do
+        b.iter()
     end
     
 end
