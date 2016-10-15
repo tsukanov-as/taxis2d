@@ -173,6 +173,7 @@ end
 -- Обработка событий
 
 function love.load(arg)
+    if arg[#arg] == "-debug" then require("mobdebug").start() end
     love.graphics.setBackgroundColor(240, 240, 240)
     loadScene()
 end
