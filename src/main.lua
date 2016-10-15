@@ -17,6 +17,8 @@ local mouseGrab
 
 local speed = 1.0 -- скорость симуляции физики
 
+local curBody
+
 --------------------------------------------------------------------------------
 -- Конструкторы объектов
 
@@ -215,6 +217,13 @@ function love.update(dt)
     
     imgui.PlotHistogram("sensors", sdata, #sdata, 0, nil, 0, 1, 0, 80)
     
+    if curBody then
+        local status, floatValue = imgui.SliderFloat("angle", curBody:getAngle() % (math.pi*2), 0, math.pi*2)
+        if status then
+            curBody:setAngle(floatValue)
+        end
+    end
+    
 end
 
 function love.draw()
@@ -222,6 +231,12 @@ function love.draw()
     -- отрисовка объектов
     for _, obj in ipairs(objects) do
         obj.draw()
+    end
+    
+    if curBody then
+        love.graphics.setColor(255, 0, 0)
+        love.graphics.setPointSize(4)
+        love.graphics.points(curBody:getPosition())    
     end
     
     for _, s in ipairs(sensors) do
@@ -289,8 +304,10 @@ function love.mousepressed(x, y, button)
         
         -- захват объекта мышкой
         if button == 1 then
+            curBody = nil
             for _, obj in ipairs(objects) do
                 if obj.test(x, y) then
+                    curBody = obj.body
                     if pause then
                         local bx, by = obj.body:getPosition()
                         mouseGrab = {body = obj.body, dx = bx - x, dy = by - y}
