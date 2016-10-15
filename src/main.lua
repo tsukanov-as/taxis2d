@@ -6,18 +6,16 @@ local sensorColor = {150, 150, 150, 100}
 
 local meter = 50
 local world
+local xg, yg = 0, 9.81 -- гравитация
 local objects
 local sensors
 
-local mouseJoint, cursorGrabbing
+local mouseJoint, mouseGrab, cursorGrabbing -- состояние захвата объекта мышкой
+local curBody -- тело в фокусе
 
 local pause = false
 
-local mouseGrab
-
 local speed = 1.0 -- скорость симуляции физики
-
-local curBody
 
 --------------------------------------------------------------------------------
 -- Конструкторы объектов
@@ -140,7 +138,7 @@ end
 -- Управление сценой
 
 local function loadScene()
-    world = love.physics.newWorld(0, 9.81 * meter, true)
+    world = love.physics.newWorld(xg*meter, yg*meter, true)
 
     cursorGrabbing = love.mouse.newCursor("img/grabbing.png", 0, 0)
 
@@ -219,6 +217,12 @@ function love.update(dt)
     local status, floatValue = imgui.SliderFloat("speed", speed, 0.0, 1.0)
     if status then
         speed = floatValue
+    end
+    
+    local status, floatValue = imgui.SliderFloat("gravity", yg, 0, 9.81)
+    if status then
+        yg = floatValue
+        world:setGravity(xg*meter, yg*meter)
     end
     
     imgui.PlotHistogram("sensors", sdata, #sdata, 0, nil, 0, 1, 0, 80)
