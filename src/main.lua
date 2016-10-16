@@ -316,6 +316,10 @@ function love.update(dt)
         end
     end
     
+    for _, s in ipairs(sensors) do
+        s.check()
+    end
+    
     for _, b in ipairs(brains) do
         b.iter()
     end
@@ -337,7 +341,6 @@ function love.draw()
     
     for _, s in ipairs(sensors) do
         s.draw()
-        s.check()
     end
     
     for _, e in ipairs(effectors) do
