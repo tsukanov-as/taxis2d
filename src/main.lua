@@ -187,14 +187,20 @@ local function newTaxis(sensors, effectors)
     return {
         iter = function()
             for e, list in pairs(taxis) do
+                local d = 0
                 local val = 0
                 for _, s in ipairs(list) do
                     local v, body = s.get()
                     if body and body:getType() ~= "static" then
-                        val = val + v
+                        if v > 0 then
+                            val = val + v
+                            d = d + 1
+                        end
                     end
                 end
-                e.pulse(math.sin(val/k*math.pi))
+                if d > 0 then
+                    e.pulse((math.sin((val/d - 0.25)*math.pi*2) + 1) / 2)
+                end
             end
         end,
     }
@@ -220,7 +226,7 @@ local function loadScene()
     do  -- генерация сенсоров
         local circleBody = objects[1].body
         local count = 28
-        local r1, r2 = 25, 150
+        local r1, r2 = 25, 300
         local angle = 0
         for _ = 1, count do
             local x, y = math.cos(angle), math.sin(angle)
