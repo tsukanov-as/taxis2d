@@ -252,6 +252,9 @@ end
 local function killScene()
     world:destroy()
     objects = {}
+    sensors, effectors, brains = {}, {}, {}
+    mouseJoint, mouseGrab, cursorGrabbing = nil, nil, nil
+    curBody = nil
 end
 
 --------------------------------------------------------------------------------
