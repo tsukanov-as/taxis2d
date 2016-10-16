@@ -142,6 +142,10 @@ local function newSensor(body, dx1, dy1, dx2, dy2)
     }
 end
 
+--[[
+    body - тело, на которое крепится эффектор
+    dx1, dy1, dx2, dy2 - координаты жгутика эффектора относительно тела
+--]]
 local function newEffector(body, dx1, dy1, dx2, dy2)
     local fx, fy = dx1 - dx2, dy1 - dy2
     local k = 1
@@ -273,83 +277,86 @@ function love.update(dt)
         world:update(dt * speed)
     end
     
+    -- кнопка перезапуска сцены
     if imgui.Button("reset") then
-        killScene(); loadScene() -- перезапуск сцены
+        killScene(); loadScene() 
     end
     
+    -- кнопка паузы для физики
     if imgui.Button("pause") then
         pause = not pause 
     end
     
-    local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+    -- кнопки создания объектов-кругов и объектов-прямоугольников
+    do local w, h = love.graphics.getWidth(), love.graphics.getHeight()
     
-    if imgui.Button("new circle") then   
-        objects[#objects+1] = newCircleObject(w/2, h/2, 25, "dynamic") 
+        if imgui.Button("new circle") then   
+            objects[#objects+1] = newCircleObject(w/2, h/2, 25, "dynamic") 
+        end
+        
+        if imgui.Button("new rectangle") then
+            objects[#objects+1] = newRectangleObject(w/2, h/2 + 100, 40, 70, "dynamic", 5) 
+        end
+    
     end
     
-    if imgui.Button("new rectangle") then
-        objects[#objects+1] = newRectangleObject(w/2, h/2 + 100, 40, 70, "dynamic", 5) 
+    -- регулятор скорости физики
+    do local status, floatValue = imgui.SliderFloat("speed", speed, 0.0, 1.0)
+        if status then
+            speed = floatValue
+        end
     end
     
-    local sdata = {}
-    for _, s in ipairs(sensors) do
-        sdata[#sdata+1] = s.get()
+    -- регулятор гравитации
+    do local status, floatValue = imgui.SliderFloat("gravity", yg, 0, 9.81)
+        if status then
+            yg = floatValue
+            world:setGravity(xg*meter, yg*meter)
+        end
     end
     
-    local status, floatValue = imgui.SliderFloat("speed", speed, 0.0, 1.0)
-    if status then
-        speed = floatValue
+    -- проверка сенсоров
+    for _, s in ipairs(sensors) do s.check() end
+    
+    -- гистограмма по данным сенсоров
+    do local sdata = {}
+        for _, s in ipairs(sensors) do
+            sdata[#sdata+1] = s.get()
+        end
+        imgui.PlotHistogram("sensors", sdata, #sdata, 0, nil, 0, 1, 0, 80)
     end
     
-    local status, floatValue = imgui.SliderFloat("gravity", yg, 0, 9.81)
-    if status then
-        yg = floatValue
-        world:setGravity(xg*meter, yg*meter)
-    end
-    
-    imgui.PlotHistogram("sensors", sdata, #sdata, 0, nil, 0, 1, 0, 80)
-    
+    -- регулятор угла текущего объекта
     if curBody then
         local status, floatValue = imgui.SliderFloat("angle", curBody:getAngle() % (math.pi*2), 0, math.pi*2)
         if status then
             curBody:setAngle(floatValue)
         end
     end
-    
-    for _, s in ipairs(sensors) do
-        s.check()
-    end
-    
-    for _, b in ipairs(brains) do
-        b.iter()
-    end
+
+    -- итерация работы мозга
+    for _, b in ipairs(brains) do b.iter() end
     
 end
 
 function love.draw()
     
-    -- отрисовка объектов
-    for _, obj in ipairs(objects) do
-        obj.draw()
-    end
+    -- отрисовка объектов, сенсоров и эффекторов
+    for _, obj in ipairs(objects) do obj.draw() end
+    for _, s in ipairs(sensors) do s.draw() end
+    for _, e in ipairs(effectors) do e.draw() end
     
+    -- отрисовка маркера текущего объекта
     if curBody then
         love.graphics.setColor(255, 0, 0)
         love.graphics.setPointSize(4)
         love.graphics.points(curBody:getPosition())    
     end
     
-    for _, s in ipairs(sensors) do
-        s.draw()
-    end
-    
-    for _, e in ipairs(effectors) do
-        e.draw()
-    end
-    
     -- отрисовка GUI
     love.graphics.setColor(255, 255, 255)
     imgui.Render()
+    
 end 
 
 function love.resize(w, h)
