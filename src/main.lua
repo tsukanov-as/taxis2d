@@ -309,10 +309,6 @@ function love.update(dt)
     
     imgui.PlotHistogram("sensors", sdata, #sdata, 0, nil, 0, 1, 0, 80)
     
-    if imgui.Button("pulse") then
-        effectors[1].pulse(0.5) 
-    end 
-    
     if curBody then
         local status, floatValue = imgui.SliderFloat("angle", curBody:getAngle() % (math.pi*2), 0, math.pi*2)
         if status then
