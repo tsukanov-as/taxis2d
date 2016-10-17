@@ -156,16 +156,12 @@ local function newEffector(body, dx1, dy1, dx2, dy2)
             love.graphics.setColor(effectorColor)
             love.graphics.line(body:getWorldPoints(dx1, dy1, dx2*k, dy2*k))
             love.graphics.setLineWidth(oldLineWidth)
-            if k > 1 then
-                k = k - 0.01
-            else
-                k = 1
-            end
+            k = 1
         end,
         pulse = function(df)
             if df > 1 then df = 1 end
             if df < 0 then df = 0 end
-            k = 1 + df*2
+            k = 1 + df
             body:applyForce(body:getWorldVector(fx*df*100, fy*df*100))
         end,
     }
