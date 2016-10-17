@@ -124,9 +124,9 @@ local function newSensor(body, dx1, dy1, dx2, dy2)
                 love.graphics.setColor(255, 0, 0, 255 * (1.2-minf))
                 love.graphics.circle("line", hitx, hity, 3)
             end
-            minf = 1
         end,
         check = function()
+            minf = 1
             local cb = function(fixture, x, y, xn, yn, fraction)
                 if fraction < minf then
                     minf = fraction
