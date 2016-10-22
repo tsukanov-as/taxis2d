@@ -72,8 +72,11 @@ local function newTabBar(label, x, y, w, h) --> table
             tab.h = 20
             love.graphics.rectangle("fill", tab.x, tab.y, tab.w, tab.h)
             love.graphics.setColor(0, 0, 0)
-            love.graphics.setFont(tabFont);
-            love.graphics.print(tab.label, tab.x+5, tab.y)
+            local text = love.graphics.newText(tabFont, tab.label)
+            if text:getWidth() > 90 then
+                text:set(tab.label:sub(1, 8).."...")
+            end
+            love.graphics.draw(text, tab.x+5, tab.y)
             dx = dx + tab.w
             tabsEventStack.push(tab)
             tab = tabsDrawStack.pop()
