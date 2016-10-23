@@ -8,7 +8,7 @@ end
 function editor.newScene(n) --> table
 	local scene = {}
 
-    scene.file = "untitled #"..n
+    scene.file = "Untitled 123545612354561235456123545612354561235456123545612354561235456 #"..n
 
 	local x, y = 0, 0
     local dx, dy = 1, 1

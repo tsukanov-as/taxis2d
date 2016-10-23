@@ -29,7 +29,7 @@ function love.update(dt)
         ui.EndMainMenuBar()
     end
 
-    if ui.BeginTabBar("main", 0, 19, love.graphics.getWidth(), 25) then
+    if ui.BeginTabBar("main", 0, 19, love.graphics.getWidth(), 23) then
         for i = #openFiles, 1, -1 do
             if ui.TabItem(openFiles[i].file) then
                 currentFile = openFiles[i]
@@ -57,7 +57,7 @@ function love.draw()
 end
 
 function love.resize(w, h)
-    --
+    ui.Resize(w, h)
 end
 
 function love.quit()

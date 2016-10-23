@@ -1,10 +1,19 @@
 local imgui = require "imgui"
 local adt = require "adt"
+local common = require "common"
 
 ui = {}
 
 local tabBars = {}
 local tabFont = love.graphics.newFont("res/FreePixel.ttf", 16);
+local tabTextIndent = 5
+local tabWidthMin, tabWidthMax = 100, 500
+local tabHeight = 18
+local tabSpace = 5
+local tabBarColor = {150, 150, 150, 200}
+local tabColor = {200, 200, 200, 200}
+local tabCurColor = {240, 240, 240}
+local tabTextColor = {0, 0, 0, 200}
 
 local treeStack = adt.NewStack()
 local drawStack = adt.NewStack()
@@ -33,10 +42,8 @@ local function newTabBar(label, x, y, w, h) --> table
         if not tab then
             tab = {
                 label = label,
-                x = 0,
-                y = 0,
-                w = 0,
-                h = 0,
+                x = 0, y = 0,
+                w = 0, h = 0,
             }
             tabs[label] = tab
         end
@@ -49,38 +56,48 @@ local function newTabBar(label, x, y, w, h) --> table
 
     function tb.Draw()
 
-        -- TODO: Убрать магические числа
-
-        local space = 6
-
-        love.graphics.setColor(150, 150, 150)
+        love.graphics.setColor(tabBarColor)
         love.graphics.rectangle("fill", x, y, w, h)
 
         local dx = 0
         tabsEventStack.clear()
+
         tab = tabsDrawStack.pop()
         while tab do
+
             if tab == curtab then
-                love.graphics.setColor(240, 240, 240)
+                love.graphics.setColor(tabCurColor)
             else
-                love.graphics.setColor(180, 180, 180)
+                love.graphics.setColor(tabColor)
             end
-            dx = dx + space
+
+            dx = dx + tabSpace
             tab.x = x + dx
-            tab.y = y + 5
-            tab.w = 100
-            tab.h = 20
-            love.graphics.rectangle("fill", tab.x, tab.y, tab.w, tab.h)
-            love.graphics.setColor(0, 0, 0)
+            tab.y = y + (h - tab.h)
+
             local text = love.graphics.newText(tabFont, tab.label)
-            if text:getWidth() > 90 then
-                text:set(tab.label:sub(1, 8).."...")
-            end
-            love.graphics.draw(text, tab.x+5, tab.y)
+
+            tab.w = common.crop1(text:getWidth() + tabTextIndent*2, tabWidthMin, tabWidthMax)
+            tab.h = tabHeight
+
+            love.graphics.rectangle("fill", tab.x, tab.y, tab.w, tab.h)
+            love.graphics.setColor(tabTextColor)
+
+            love.graphics.setScissor(tab.x + tabTextIndent, tab.y, tab.w - tabTextIndent*2, tab.h)
+            love.graphics.draw(text, tab.x + tabTextIndent, tab.y)
+            love.graphics.setScissor()
+
             dx = dx + tab.w
             tabsEventStack.push(tab)
             tab = tabsDrawStack.pop()
+
         end
+
+        function tb.setSize(new_w, new_h)
+            w = new_w or w
+            h = new_h or h
+        end
+
     end
 
     function tb.MousePressed(mx, my)
@@ -120,6 +137,12 @@ function ui.TabItem(label) --> bool
     local tabBar = treeStack.peek()
     assert(tabBar.Type() == "tabBar")
     return tabBar.Insert(label)
+end
+
+function ui.Resize(w, h)
+    for _, tb in pairs(tabBars) do
+        tb.setSize(w)
+    end
 end
 
 
