@@ -20,7 +20,7 @@ function marshal.Dump(x)
             end
             t[#t+1] = "}"
         else
-            t[#t+1] = "nil"
+            t[#t+1] = "null"
         end
     elseif type(x) == "string" then
         t[#t+1] = string.format("%q", x)
@@ -28,8 +28,8 @@ function marshal.Dump(x)
         t[#t+1] = tostring(x)
     elseif type(x) == "boolean" then
         t[#t+1] = '"'..tostring(x)..'"'
-    else
-        io.write("nil")
+    elseif type(x) ~= "function" then
+        error("unknown type")
     end
     return table.concat(t)
 end
@@ -126,6 +126,12 @@ function marshal.Load(s)
         parse_integer()
         if c == '.' then
             parse_integer()
+            if c == 'e' then
+                parse_integer()
+                if c == '-' then
+                    parse_integer()
+                end
+            end
         end
         local stop = pos-1
         return tonumber(s:sub(start, stop))
@@ -139,7 +145,7 @@ function marshal.Load(s)
             res = parse_array()
         elseif c == '"' then
             res = parse_string()
-        elseif "0" <= c and c <= "9" then
+        elseif ("0" <= c and c <= "9") or c == '-' then
             res = parse_number()
         elseif s:sub(pos, pos+3) == "true" then
             next(4)
@@ -147,9 +153,9 @@ function marshal.Load(s)
         elseif s:sub(pos, pos+4) == "false" then
             next(5)
             res = false
-        elseif s:sub(pos, pos+2) == "nil" then
-            next(3)
-            res = nil
+        elseif s:sub(pos, pos+3) == "null" then
+            next(4)
+            res = {}
         else
             error("unknown symbol")
         end
