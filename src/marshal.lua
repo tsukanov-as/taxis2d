@@ -27,9 +27,11 @@ function marshal.Dump(x)
     elseif type(x) == "number" then
         t[#t+1] = tostring(x)
     elseif type(x) == "boolean" then
-        t[#t+1] = '"'..tostring(x)..'"'
-    elseif type(x) ~= "function" then
-        error("unknown type")
+        t[#t+1] = tostring(x)
+    elseif type(x) == "function" then
+        t[#t+1] = "null"
+    else
+        error("unknown type: "..type(x))
     end
     return table.concat(t)
 end
