@@ -109,7 +109,10 @@ function marshal.Load(s)
         while c ~= '"' and c ~= '' do
             next()
             if c == '\\' then
-                next(2)
+                next()
+                if c == '"' then
+                    next()
+                end
             end
         end
         local stop = pos-1
