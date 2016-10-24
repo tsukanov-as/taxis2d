@@ -15,17 +15,17 @@ local tabColor = {200, 200, 200, 200}
 local tabCurColor = {240, 240, 240}
 local tabTextColor = {0, 0, 0, 200}
 
-local treeStack = adt.NewStack()
-local drawStack = adt.NewStack()
-local eventStack = adt.NewStack()
+local treeStack = adt.NewArray()
+local drawList = adt.NewArray()
+local eventList = adt.NewArray()
 
 
 local function newTabBar(label, x, y, w, h) --> table
 
     local tabs = {}
     local curtab
-    local tabsDrawStack = adt.NewStack()
-    local tabsEventStack = adt.NewStack()
+    local tabsDrawList = adt.NewArray()
+    local tabsEventList = adt.NewArray()
 
     local tb = {}
 
@@ -50,7 +50,7 @@ local function newTabBar(label, x, y, w, h) --> table
         if not curtab then
             curtab = tab
         end
-        tabsDrawStack.push(tab)
+        tabsDrawList.push(tab)
         return tab == curtab
     end
 
@@ -60,10 +60,9 @@ local function newTabBar(label, x, y, w, h) --> table
         love.graphics.rectangle("fill", x, y, w, h)
 
         local dx = 0
-        tabsEventStack.clear()
+        tabsEventList.clear()
 
-        tab = tabsDrawStack.pop()
-        while tab do
+        for _, tab in ipairs(tabsDrawList) do
 
             if tab == curtab then
                 love.graphics.setColor(tabCurColor)
@@ -88,10 +87,10 @@ local function newTabBar(label, x, y, w, h) --> table
             love.graphics.setScissor()
 
             dx = dx + tab.w
-            tabsEventStack.push(tab)
-            tab = tabsDrawStack.pop()
+            tabsEventList.push(tab)
 
         end
+        tabsDrawList.clear()
 
         function tb.setSize(new_w, new_h)
             w = new_w or w
@@ -103,7 +102,7 @@ local function newTabBar(label, x, y, w, h) --> table
     function tb.MousePressed(mx, my)
         if x < mx and mx < x+w and
            y < my and my < y+h then
-            for _, tab in ipairs(tabsEventStack) do
+            for _, tab in ipairs(tabsEventList) do
                 if tab.x < mx and mx < tab.x+tab.w and
                    tab.y < my and my < tab.y+tab.h then
                     curtab = tab
@@ -130,7 +129,7 @@ end
 function ui.EndTabBar()
     local tabBar = treeStack.pop()
     assert(tabBar.Type() == "tabBar")
-    drawStack.push(tabBar)
+    drawList.push(tabBar)
 end
 
 function ui.TabItem(label) --> bool
@@ -223,13 +222,12 @@ end
 
 
 function ui.Render()
-    eventStack.clear()
-    local element = drawStack.pop()
-    while element do
+    eventList.clear()
+    for _, element in ipairs(drawList) do
         element.Draw()
-        eventStack.push(element)
-        element = drawStack.pop()
+        eventList.push(element)
     end
+    drawList.clear()
     love.graphics.setColor(255, 255, 255)
     imgui.Render()
 end
@@ -267,7 +265,7 @@ function ui.MousePressed(x, y, button) --> bool
         return true
     else
         if button == 1 then
-            for _, element in ipairs(eventStack) do
+            for _, element in ipairs(eventList) do
                 if element.MousePressed(x, y) then
                     return true
                 end

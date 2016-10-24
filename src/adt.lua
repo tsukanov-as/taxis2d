@@ -1,30 +1,42 @@
 local adt = {}
 
-function adt.NewStack()
+function adt.NewArray(array)
 
-	local stack = {}
-	
-	function stack.push(v)
-		stack[#stack+1] = v
-	end
+    array = array or {}
 
-	function stack.pop() --> any
-		local v = stack[#stack]
-		stack[#stack] = nil
-		return v
-	end
+    setmetatable(array, table)
 
-	function stack.peek() --> any
-		return stack[#stack]
-	end
-    
-    function stack.clear()
-        for i in ipairs(stack) do
-            stack[i] = nil
-        end 
+    function array.push(v)
+        table.insert(array, v)
     end
-    
-    return stack
+
+    function array.pop() --> any
+        return table.remove(array)
+    end
+
+    function array.peek() --> any
+        return array[#array]
+    end
+
+    function array.clear()
+        for i in ipairs(array) do
+            array[i] = nil
+        end
+    end
+
+    function array.insert(i, v)
+        table.insert(array, i, v)
+    end
+
+    function array.shift() --> any
+        return table.remove(array, 1)
+    end
+
+    function array.remove(i) --> any
+        return table.remove(array, i)
+    end
+
+    return array
 end
 
 return adt
