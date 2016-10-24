@@ -4,8 +4,6 @@ function adt.NewArray(array)
 
     array = array or {}
 
-    setmetatable(array, table)
-
     function array.push(v)
         table.insert(array, v)
     end
