@@ -3,50 +3,64 @@ local adt = require "adt"
 local marshal = {}
 
 function marshal.Dump(x)
-    if type(x) == "table" then
-        local list = adt.NewArray()
-        if #x > 0 then
-            list.push "["
-            for _, v in ipairs(x) do
-                local vd = marshal.Dump(v)
-                if vd then
-                    list.push(vd)
-                    list.push ","
-                end
-            end
-            if list.peek() == "[" then
-                return "null"
-            end
-            list.push "]"
-        elseif next(x) then
-            list.push "{"
-            for k, v in pairs(x) do
-                local kd = marshal.Dump(k)
-                if kd then
-                    list.push(kd)
-                    list.push ":"
-                    local vd = marshal.Dump(v)
+    local space = "    "
+    local indent = 0
+    local function dump(x)
+        if type(x) == "table" then
+            local list = adt.NewArray()
+            if #x > 0 then
+                list.push "[\n"
+                indent = indent + 1
+                for _, v in ipairs(x) do
+                    local vd = dump(v)
                     if vd then
+                        list.push(space:rep(indent))
                         list.push(vd)
-                        list.push ","
+                        list.push ",\n"
                     end
                 end
+                indent = indent - 1
+                if list.peek() == "[" then
+                    return list.push(space:rep(indent)).."null"
+                end
+                list.push(space:rep(indent))
+                list.push "]"
+            elseif next(x) then
+                list.push "{\n"
+                indent = indent + 1
+                for k, v in pairs(x) do
+                    local kd = dump(k)
+                    if kd then
+                        list.push(space:rep(indent))
+                        list.push(kd)
+                        list.push ": "
+                        indent = indent
+                        local vd = dump(v)
+                        if vd then
+                            list.push(vd)
+                            list.push ",\n"
+                        end
+                    end
+                end
+                indent = indent - 1
+                if list.peek() == "{" then
+                    return list.push(space:rep(indent)).."null"
+                end
+                list.push(space:rep(indent))
+                list.push "}"
+            else
+                return list.push(space:rep(indent)).."null"
             end
-            if list.peek() == "{" then
-                return "null"
-            end
-            list.push "}"
+            return list.join()
+        elseif type(x) == "string"   then return string.format("%q", x)
+        elseif type(x) == "number"   then return tostring(x)
+        elseif type(x) == "boolean"  then return tostring(x)
+        elseif type(x) == "function" then return nil
         else
-            return "null"
+            error("unknown type: "..type(x))
         end
-        return list.join()
-    elseif type(x) == "string"   then return string.format("%q", x)
-    elseif type(x) == "number"   then return tostring(x)
-    elseif type(x) == "boolean"  then return tostring(x)
-    elseif type(x) == "function" then return nil
-    else
-        error("unknown type: "..type(x))
     end
+    return dump(x)
 end
 
 -- http://stackoverflow.com/questions/19961598/substitute-double-backslash-from-input-with-single-backslash-in-lua
@@ -79,7 +93,7 @@ function marshal.Load(s)
     end
 
     local function skip(x)
-        assert(c == x)
+        assert(c == x, c)
         repeat getc() until c == '' or c:find("%S")
     end
 
@@ -143,11 +157,11 @@ function marshal.Load(s)
         parse_integer()
         if c == '.' then
             parse_integer()
-            if c == 'e' then
+        end
+        if c == 'e' then
+            parse_integer()
+            if c == '-' then
                 parse_integer()
-                if c == '-' then
-                    parse_integer()
-                end
             end
         end
         local stop = pos-1
