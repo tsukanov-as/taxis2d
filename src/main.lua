@@ -30,16 +30,16 @@ function love.update(dt)
     end
 
     if ui.BeginTabBar("main", 0, 19, love.graphics.getWidth(), 23) then
-        for i = #openFiles, 1, -1 do
-            if ui.TabItem(openFiles[i].file) then
-                currentFile = openFiles[i]
+        for _, file in ipairs(openFiles) do
+            if ui.TabItem(file.path) then
+                currentFile = file
             end
         end
         ui.EndTabBar()
     end
 
     if currentFile then
-        currentFile.update()
+        currentFile.update(dt)
     end
 
 end
