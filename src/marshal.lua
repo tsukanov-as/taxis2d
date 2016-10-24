@@ -1,39 +1,52 @@
+local adt = require "adt"
+
 local marshal = {}
 
 function marshal.Dump(x)
-    local t = {}
     if type(x) == "table" then
+        local list = adt.NewArray()
         if #x > 0 then
-            t[#t+1] = "["
+            list.push "["
             for _, v in ipairs(x) do
-                t[#t+1] = marshal.Dump(v)
-                t[#t+1] = ","
+                local vd = marshal.Dump(v)
+                if vd then
+                    list.push(vd)
+                    list.push ","
+                end
             end
-            t[#t+1] = "]"
+            if list.peek() == "[" then
+                return "null"
+            end
+            list.push "]"
         elseif next(x) then
-            t[#t+1] = "{"
+            list.push "{"
             for k, v in pairs(x) do
-                t[#t+1] = marshal.Dump(k)
-                t[#t+1] = ":"
-                t[#t+1] = marshal.Dump(v)
-                t[#t+1] = ","
+                local kd = marshal.Dump(k)
+                if kd then
+                    list.push(kd)
+                    list.push ":"
+                    local vd = marshal.Dump(v)
+                    if vd then
+                        list.push(vd)
+                        list.push ","
+                    end
+                end
             end
-            t[#t+1] = "}"
+            if list.peek() == "{" then
+                return "null"
+            end
+            list.push "}"
         else
-            t[#t+1] = "null"
+            return "null"
         end
-    elseif type(x) == "string" then
-        t[#t+1] = string.format("%q", x)
-    elseif type(x) == "number" then
-        t[#t+1] = tostring(x)
-    elseif type(x) == "boolean" then
-        t[#t+1] = tostring(x)
-    elseif type(x) == "function" then
-        t[#t+1] = "null"
+        return list.join()
+    elseif type(x) == "string"   then return string.format("%q", x)
+    elseif type(x) == "number"   then return tostring(x)
+    elseif type(x) == "boolean"  then return tostring(x)
+    elseif type(x) == "function" then return nil
     else
         error("unknown type: "..type(x))
     end
-    return table.concat(t)
 end
 
 -- http://stackoverflow.com/questions/19961598/substitute-double-backslash-from-input-with-single-backslash-in-lua
@@ -48,7 +61,6 @@ local function unbackslashed(s)
         ["\\v"] = '\\011', --'\v' vertical tab      Ctrl+K VT
         ["\\\n"] = '\\010',--     newline
         ["\\\\"] = '\\092',--     backslash
-        ["\\'"] = '\\039', --     apostrophe
         ['\\"'] = '\\034', --     quote
     }
     return s:gsub("(\\.)", ch)
@@ -61,30 +73,30 @@ function marshal.Load(s)
 
     local c, pos = nil, 0
 
-    local function next(n)
+    local function getc(n)
         pos = pos + (n or 1)
         c = s:sub(pos, pos)
     end
 
     local function skip(x)
         assert(c == x)
-        repeat next() until c == '' or c:find("%S")
+        repeat getc() until c == '' or c:find("%S")
     end
 
-    next()
+    getc()
 
     local parse
 
     local function parse_table()
         local t = {}
         skip('{')
-        repeat
+        while c ~= '}' and c ~= '' do
             local k = parse()
             skip(':')
             local v = parse()
             skip(',')
             t[k] = v
-        until c == '}' or c == ''
+        end
         skip('}')
         return t
     end
@@ -93,12 +105,12 @@ function marshal.Load(s)
         local a = {}
         local i = 1
         skip('[')
-        repeat
+        while c ~= ']' and c ~= '' do
             local v = parse()
             skip(',')
             a[i] = v
             i = i + 1
-        until c == ']' or c == ''
+        end
         skip(']')
         return a
     end
@@ -107,11 +119,11 @@ function marshal.Load(s)
         skip('"')
         local start = pos
         while c ~= '"' and c ~= '' do
-            next()
+            getc()
             if c == '\\' then
-                next()
+                getc()
                 if c == '"' then
-                    next()
+                    getc()
                 end
             end
         end
@@ -122,7 +134,7 @@ function marshal.Load(s)
 
     local function parse_integer()
         repeat
-            next()
+            getc()
         until c == '' or c < "0" or "9" < c
     end
 
@@ -153,13 +165,13 @@ function marshal.Load(s)
         elseif ("0" <= c and c <= "9") or c == '-' then
             res = parse_number()
         elseif s:sub(pos, pos+3) == "true" then
-            next(4)
+            getc(4)
             res = true
         elseif s:sub(pos, pos+4) == "false" then
-            next(5)
+            getc(5)
             res = false
         elseif s:sub(pos, pos+3) == "null" then
-            next(4)
+            getc(4)
             res = {}
         else
             error("unknown symbol")
