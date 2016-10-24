@@ -34,6 +34,10 @@ function adt.NewArray(array)
         return table.remove(array, i)
     end
 
+    function array.join(separator)
+        return table.concat(array, separator)
+    end
+
     return array
 end
 
