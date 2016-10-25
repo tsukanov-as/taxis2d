@@ -72,12 +72,12 @@ local function newTabBar(label, x, y, w, h) --> table
 
             dx = dx + tabSpace
             tab.x = x + dx
+            tab.h = tabHeight
             tab.y = y + (h - tab.h)
 
             local text = love.graphics.newText(tabFont, tab.label)
 
             tab.w = common.crop1(text:getWidth() + tabTextIndent*2, tabWidthMin, tabWidthMax)
-            tab.h = tabHeight
 
             love.graphics.rectangle("fill", tab.x, tab.y, tab.w, tab.h)
             love.graphics.setColor(tabTextColor)
