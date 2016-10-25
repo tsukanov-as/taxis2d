@@ -3,13 +3,14 @@ local adt = require "adt"
 local marshal = {}
 
 function marshal.Dump(x)
-    local space = "    "
+    local space = "\t"
     local indent = 0
     local function dump(x)
         if type(x) == "table" then
             local list = adt.NewArray()
             if #x > 0 then
                 list.push "[\n"
+                local count = #list
                 indent = indent + 1
                 for _, v in ipairs(x) do
                     local vd = dump(v)
@@ -20,42 +21,44 @@ function marshal.Dump(x)
                     end
                 end
                 indent = indent - 1
-                if list.peek() == "[" then
-                    return list.push(space:rep(indent)).."null"
+                if count == #list then
+                    return "null"
                 end
                 list.push(space:rep(indent))
                 list.push "]"
             elseif next(x) then
                 list.push "{\n"
+                local count = #list
                 indent = indent + 1
                 for k, v in pairs(x) do
                     local kd = dump(k)
                     if kd then
-                        list.push(space:rep(indent))
-                        list.push(kd)
-                        list.push ": "
-                        indent = indent
                         local vd = dump(v)
                         if vd then
+                            list.push(space:rep(indent))
+                            list.push(kd)
+                            list.push ": "
                             list.push(vd)
                             list.push ",\n"
                         end
                     end
                 end
                 indent = indent - 1
-                if list.peek() == "{" then
-                    return list.push(space:rep(indent)).."null"
+                if count == #list then
+                    return "null"
                 end
                 list.push(space:rep(indent))
                 list.push "}"
             else
-                return list.push(space:rep(indent)).."null"
+                return "null"
             end
             return list.join()
         elseif type(x) == "string"   then return string.format("%q", x)
         elseif type(x) == "number"   then return tostring(x)
         elseif type(x) == "boolean"  then return tostring(x)
         elseif type(x) == "function" then return nil
+        elseif type(x) == "userdata" then return nil
+        elseif type(x) == "thread"   then return nil
         else
             error("unknown type: "..type(x))
         end
@@ -86,6 +89,7 @@ end
 function marshal.Load(s)
 
     local c, pos = nil, 0
+    local eof = ''
 
     local function getc(n)
         pos = pos + (n or 1)
@@ -93,11 +97,12 @@ function marshal.Load(s)
     end
 
     local function skip(x)
+        while c <= ' ' and c ~= eof do getc() end
         assert(c == x, c)
-        repeat getc() until c == '' or c:find("%S")
+        repeat getc() until c > ' ' or c == eof
     end
 
-    getc()
+    repeat getc() until c > ' ' or c == eof
 
     local parse
 
@@ -188,7 +193,7 @@ function marshal.Load(s)
             getc(4)
             res = {}
         else
-            error("unknown symbol")
+            error("unknown symbol: "..c)
         end
         return res
     end
