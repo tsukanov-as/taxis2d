@@ -109,7 +109,7 @@ function marshal.Load(s)
     local function parse_table()
         local t = {}
         skip('{')
-        while c ~= '}' and c ~= '' do
+        while c ~= '}' and c ~= eof do
             local k = parse()
             skip(':')
             local v = parse()
@@ -124,7 +124,7 @@ function marshal.Load(s)
         local a = {}
         local i = 1
         skip('[')
-        while c ~= ']' and c ~= '' do
+        while c ~= ']' and c ~= eof do
             local v = parse()
             skip(',')
             a[i] = v
@@ -137,7 +137,7 @@ function marshal.Load(s)
     local function parse_string()
         skip('"')
         local start = pos
-        while c ~= '"' and c ~= '' do
+        while c ~= '"' and c ~= eof do
             getc()
             if c == '\\' then
                 getc()
@@ -154,7 +154,7 @@ function marshal.Load(s)
     local function parse_integer()
         repeat
             getc()
-        until c == '' or c < "0" or "9" < c
+        until c == eof or c < '0' or '9' < c
     end
 
     local function parse_number()
@@ -181,7 +181,7 @@ function marshal.Load(s)
             res = parse_array()
         elseif c == '"' then
             res = parse_string()
-        elseif ("0" <= c and c <= "9") or c == '-' then
+        elseif ('0' <= c and c <= '9') or c == '-' then
             res = parse_number()
         elseif s:sub(pos, pos+3) == "true" then
             getc(4)
