@@ -92,17 +92,17 @@ function marshal.Load(s)
     local eof = ''
 
     local function getc(n)
-        pos = pos + (n or 1)
+        pos = pos + n
         c = s:sub(pos, pos)
     end
 
     local function skip(x)
-        while c <= ' ' and c ~= eof do getc() end
+        while c <= ' ' and c ~= eof do getc(1) end
         assert(c == x, c)
-        repeat getc() until c > ' ' or c == eof
+        repeat getc(1) until c > ' ' or c == eof
     end
 
-    repeat getc() until c > ' ' or c == eof
+    repeat getc(1) until c > ' ' or c == eof
 
     local parse
 
@@ -138,11 +138,11 @@ function marshal.Load(s)
         skip('"')
         local start = pos
         while c ~= '"' and c ~= eof do
-            getc()
+            getc(1)
             if c == '\\' then
-                getc()
+                getc(1)
                 if c == '"' then
-                    getc()
+                    getc(1)
                 end
             end
         end
@@ -152,25 +152,30 @@ function marshal.Load(s)
     end
 
     local function parse_integer()
-        repeat
-            getc()
-        until c == eof or c < '0' or '9' < c
+        local len = 0
+        while c ~= eof and '0' <= c and c <= '9' do
+            getc(1); len = len + 1
+        end
+        return len
     end
 
     local function parse_number()
         local start = pos
-        parse_integer()
+        local n = parse_integer()
         if c == '.' then
-            parse_integer()
+            getc(1)
+            n = n + parse_integer()
         end
         if c == 'e' then
-            parse_integer()
+            getc(1)
             if c == '-' then
-                parse_integer()
+                getc(1)
             end
+            assert(parse_integer())
         end
+        assert(n > 0)
         local stop = pos-1
-        return tonumber(s:sub(start, stop))
+        return assert(tonumber(s:sub(start, stop)))
     end
 
     parse = function()
@@ -181,7 +186,10 @@ function marshal.Load(s)
             res = parse_array()
         elseif c == '"' then
             res = parse_string()
-        elseif ('0' <= c and c <= '9') or c == '-' then
+        elseif '0' <= c and c <= '9' then
+            res = parse_number()
+        elseif c == '-' then
+            getc(1)
             res = parse_number()
         elseif s:sub(pos, pos+3) == "true" then
             getc(4)
