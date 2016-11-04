@@ -15,17 +15,14 @@ function marshal.Dump(x)
                 for _, v in ipairs(x) do
                     local vd = dump(v)
                     if vd then
-                        list.push(space:rep(indent))
-                        list.push(vd)
-                        list.push ",\n"
+                        list.push(space:rep(indent), vd, ",\n")
                     end
                 end
                 indent = indent - 1
                 if count == #list then
                     return "null"
                 end
-                list.push(space:rep(indent))
-                list.push "]"
+                list.push(space:rep(indent), "]")
             elseif next(x) then
                 list.push "{\n"
                 local count = #list
@@ -35,11 +32,7 @@ function marshal.Dump(x)
                     if kd then
                         local vd = dump(v)
                         if vd then
-                            list.push(space:rep(indent))
-                            list.push(kd)
-                            list.push ": "
-                            list.push(vd)
-                            list.push ",\n"
+                            list.push(space:rep(indent), kd, ": ", vd, ",\n")
                         end
                     end
                 end
@@ -47,8 +40,7 @@ function marshal.Dump(x)
                 if count == #list then
                     return "null"
                 end
-                list.push(space:rep(indent))
-                list.push "}"
+                list.push(space:rep(indent), "}")
             else
                 return "null"
             end

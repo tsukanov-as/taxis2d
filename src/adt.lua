@@ -4,8 +4,12 @@ function adt.NewArray(array)
 
     array = array or {}
 
-    function array.push(v)
+    function array.push(v, ...)
         table.insert(array, v)
+        for i = 1, select("#", ...) do
+            local v = select(i, ...)
+            table.insert(array, v)
+        end
     end
 
     function array.pop() --> any
@@ -17,7 +21,7 @@ function adt.NewArray(array)
     end
 
     function array.clear()
-        for i in ipairs(array) do
+        for i = 1, #array do
             array[i] = nil
         end
     end
